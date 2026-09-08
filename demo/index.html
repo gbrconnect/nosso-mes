@@ -588,7 +588,7 @@ svg [data-drill]:hover{opacity:.78}
   <main class="main">
     <div class="demoBar">
       <span class="tag">Demonstração</span>
-      <span class="txt">Você está vendo o Nosso Mês com dados de exemplo. Tudo fica só no seu navegador, nada é enviado para lugar nenhum.</span>
+      <span class="txt">Demonstração com dados de exemplo. Mexa à vontade: <b>nada aqui é salvo</b>, e ao atualizar ou fechar a página tudo volta ao início.</span>
       <button class="btn sm gh" id="demoReset">↻ Recarregar exemplo</button>
       <button class="btn sm" id="demoSobre">Sobre o app</button>
       <a class="btn sm pri" id="demoComprar" href="#" target="_blank" rel="noopener" style="display:none">Quero o meu</a>
@@ -1475,8 +1475,26 @@ svg [data-drill]:hover{opacity:.78}
 <script>
 /* =========================================================
    Nosso Mês. App de arquivo único, sem servidor.
-   Os dados ficam no navegador (localStorage) + backup .json
+   Demonstração: os dados vivem só nesta página, nada é gravado
    ========================================================= */
+
+/* =========================================================
+   DEMONSTRAÇÃO: nada é salvo no navegador.
+   Todo o armazenamento vive só enquanto esta página estiver aberta.
+   Atualizar ou fechar volta tudo para os dados de exemplo.
+   ========================================================= */
+const demoStore=(function(){
+  const m={};
+  return {
+    getItem:k=>(Object.prototype.hasOwnProperty.call(m,k)?m[k]:null),
+    setItem:(k,v)=>{m[k]=String(v);},
+    removeItem:k=>{delete m[k];},
+    clear:()=>{for(const k in m)delete m[k];},
+    key:i=>Object.keys(m)[i]||null,
+    get length(){return Object.keys(m).length;}
+  };
+})();
+
 const KEY='financas.casal.demo';
 const DEMO=true;
 
@@ -1579,14 +1597,14 @@ const vazio=()=>({
 let S=vazio();
 
 function carregar(){
-  try{const raw=localStorage.getItem(KEY);
+  try{const raw=demoStore.getItem(KEY);
     if(raw){const d=JSON.parse(raw);S=Object.assign(vazio(),d);S.config=Object.assign(vazio().config,d.config||{});}
   }catch(e){storageOK=false;console.warn('storage indisponível',e);}
 }
 let saveTimer=null;
 function salvar(){
   clearTimeout(saveTimer);
-  saveTimer=setTimeout(()=>{try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){storageOK=false;}
+  saveTimer=setTimeout(()=>{try{demoStore.setItem(KEY,JSON.stringify(S));}catch(e){storageOK=false;}
     agendaNuvem();},120);
 }
 function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('on');
@@ -3634,7 +3652,7 @@ function renderConfig(){
   if(bt)bt.onclick=()=>confirmar(`Voltar os dados para a cópia de ${dataBR(sn.em.slice(0,10))}? O estado atual será substituído.`,()=>{
     const atual=JSON.parse(JSON.stringify(S));
     S=Object.assign(vazio(),sn.dados);S.config=Object.assign(vazio().config,sn.dados.config||{});
-    try{localStorage.setItem(KSNAP,JSON.stringify({em:new Date().toISOString(),motivo:'antes de restaurar a cópia interna',dados:atual}));}catch(e){}
+    try{demoStore.setItem(KSNAP,JSON.stringify({em:new Date().toISOString(),motivo:'antes de restaurar a cópia interna',dados:atual}));}catch(e){}
     salvar();render();toast('Cópia interna restaurada');},'Restaurar cópia interna');
   $('#storeInfo').innerHTML=storageOK
     ? `Salvo automaticamente neste navegador. <b>Baixe o backup de vez em quando.</b> Se você limpar os dados do navegador, o histórico vai junto.`
@@ -3703,9 +3721,9 @@ $('#novaCat').addEventListener('keydown',e=>{if(e.key==='Enter')$('#btnAddCat').
 /* ---------- proteção do histórico ---------- */
 const KSNAP=KEY+'.snap';
 function snapshot(motivo){
-  try{localStorage.setItem(KSNAP,JSON.stringify({em:new Date().toISOString(),motivo,dados:S}));}catch(e){}
+  try{demoStore.setItem(KSNAP,JSON.stringify({em:new Date().toISOString(),motivo,dados:S}));}catch(e){}
 }
-function lerSnapshot(){try{const r=localStorage.getItem(KSNAP);return r?JSON.parse(r):null;}catch(e){return null;}}
+function lerSnapshot(){try{const r=demoStore.getItem(KSNAP);return r?JSON.parse(r):null;}catch(e){return null;}}
 function diasDesde(iso){
   if(!iso)return null;
   return Math.floor((Date.now()-new Date(iso).getTime())/86400000);
@@ -3773,7 +3791,7 @@ function exportarCsv(){
 }
 $('#btnBackup').onclick=exportar;$('#cfgExport').onclick=exportar;
 $('#btnExpCsv').onclick=exportarCsv;$('#cfgCsv').onclick=exportarCsv;
-$('#cfgImport').onclick=()=>$('#fileJson').click();
+$('#cfgImport').onclick=()=>toast('Restaurar backup funciona na versão completa. Aqui na demonstração os dados são sempre os de exemplo');
 $('#fileJson').onchange=e=>{
   const f=e.target.files[0];if(!f)return;
   const rd=new FileReader();
@@ -3789,7 +3807,7 @@ $('#fileJson').onchange=e=>{
 };
 $('#cfgZerar').onclick=()=>confirmar('Isso apaga TODOS os dados deste app neste navegador. Uma cópia interna fica guardada para você poder desfazer. Tem certeza?',()=>{
   snapshot('antes de apagar tudo');
-  S=vazio();try{localStorage.removeItem(KEY);}catch(e){}salvar();render();toast('Tudo zerado');},'Apagar tudo');
+  S=vazio();try{demoStore.removeItem(KEY);}catch(e){}salvar();render();toast('Tudo zerado');},'Apagar tudo');
 </script>
 
 <script>
@@ -4283,11 +4301,11 @@ const KSES='nossomes.sessao', KSYNC='nossomes.sync';
 
 const sb={
   tok:null, ref:null, exp:0, user:null,
-  carrega(){try{const s=JSON.parse(localStorage.getItem(KSES)||'null');
+  carrega(){try{const s=JSON.parse(demoStore.getItem(KSES)||'null');
     if(s){this.tok=s.tok;this.ref=s.ref;this.exp=s.exp||0;this.user=s.user;}}catch(e){}},
-  grava(){try{localStorage.setItem(KSES,JSON.stringify({tok:this.tok,ref:this.ref,exp:this.exp,user:this.user}));}catch(e){}},
+  grava(){try{demoStore.setItem(KSES,JSON.stringify({tok:this.tok,ref:this.ref,exp:this.exp,user:this.user}));}catch(e){}},
   limpa(){this.tok=null;this.ref=null;this.user=null;this.exp=0;
-    try{localStorage.removeItem(KSES);localStorage.removeItem(KSYNC);}catch(e){}},
+    try{demoStore.removeItem(KSES);demoStore.removeItem(KSYNC);}catch(e){}},
   logado(){return !!(this.tok&&this.user);},
   async bruto(caminho,opt){
     opt=opt||{};
@@ -4350,8 +4368,8 @@ const ehMaster=()=>!!(perfil&&perfil.admin);
 
 /* ---------- estado da sincronia ---------- */
 let syncEstado='', syncTimer=null, syncOcupado=false, syncPendente=false;
-const lerSync=()=>{try{return localStorage.getItem(KSYNC);}catch(e){return null;}};
-const gravaSync=v=>{try{v?localStorage.setItem(KSYNC,v):localStorage.removeItem(KSYNC);}catch(e){}};
+const lerSync=()=>{try{return demoStore.getItem(KSYNC);}catch(e){return null;}};
+const gravaSync=v=>{try{v?demoStore.setItem(KSYNC,v):demoStore.removeItem(KSYNC);}catch(e){}};
 
 function marcaSync(e){
   syncEstado=e;
@@ -4536,7 +4554,7 @@ function aplicaRemoto(remoto){
   S=Object.assign(vazio(),remoto.payload||{});
   S.config=Object.assign(vazio().config,(remoto.payload||{}).config||{});
   gravaSync(remoto.atualizado_em);
-  try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}
+  try{demoStore.setItem(KEY,JSON.stringify(S));}catch(e){}
   marcaSync('ok');
   mesRef=mesHoje();$('#mesRef').value=mesRef;
   render();
@@ -4761,8 +4779,7 @@ render();
     marcaSync('local');
     if(!temDados()){carregarDemo(true);mesRef=mesHoje();$('#mesRef').value=mesRef;ir('dash');}
     if(LINK_COMPRA){[$('#demoComprar'),$('#abComprar')].forEach(a=>{a.href=LINK_COMPRA;a.style.display='';});}
-    $('#demoReset').onclick=()=>confirmar('Recarregar os dados de exemplo? O que você mexeu aqui na demonstração vai embora.',
-      ()=>{carregarDemo();ir('dash');},'Recarregar exemplo');
+    $('#demoReset').onclick=()=>{carregarDemo();ir('dash');};
     $('#demoSobre').onclick=()=>abrirAbertura();
     return;
   }
@@ -4781,7 +4798,7 @@ render();
   }
 })();
 
-window.addEventListener('beforeunload',()=>{try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}});
+window.addEventListener('beforeunload',()=>{try{demoStore.setItem(KEY,JSON.stringify(S));}catch(e){}});
 window.addEventListener('online',()=>{if(NUVEM&&sb.logado()&&syncEstado==='erro')nuvemSubir();});
 </script>
 </body>
