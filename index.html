@@ -155,6 +155,10 @@ section.page.on{display:block;animation:fade .18s ease}
 .card .bd{padding:16px}
 .card .bd.tight{padding:0}
 .grid{display:grid;gap:14px;align-items:start}
+/* painel: cards se encaixam nas duas colunas sem deixar vão */
+.painelCards{columns:2;column-gap:14px;margin-top:14px}
+.painelCards>.card{break-inside:avoid;margin:0 0 14px;display:inline-block;width:100%}
+@media(max-width:1050px){.painelCards{columns:1}}
 .grid>*{min-width:0}
 .g4{grid-template-columns:repeat(4,minmax(0,1fr))}
 .g3{grid-template-columns:repeat(3,minmax(0,1fr))}
@@ -507,29 +511,23 @@ svg [data-drill]:hover{opacity:.78}
         </div>
         <div class="grid g4" id="kpis"></div>
 
-        <div class="grid g2" style="margin-top:14px">
-          <div class="card">
-            <div class="hd"><h3>Receitas × Despesas</h3><span class="sub" id="chBarsSub">últimos 6 meses</span></div>
-            <div class="bd" id="chBars"></div>
-          </div>
-          <div class="card">
-            <div class="hd"><h3>Despesas por categoria</h3><span class="sub" id="chCatSub"></span></div>
-            <div class="bd" id="chCat"></div>
-          </div>
-        </div>
-
-        <div class="grid g2" style="margin-top:14px">
-          <div class="card">
-            <div class="hd"><h3>Evolução do saldo acumulado</h3><span class="sub">12 meses</span></div>
-            <div class="bd" id="chLine"></div>
-          </div>
-          <div class="card">
-            <div class="hd"><h3 id="chPessoasT">Quem paga o quê</h3><span class="sub" id="chPessoasS">no mês selecionado</span></div>
-            <div class="bd" id="chPessoas"></div>
-          </div>
-        </div>
-
-        <div class="grid g2" style="margin-top:14px">
+                <div class="painelCards">
+            <div class="card">
+              <div class="hd"><h3>Receitas × Despesas</h3><span class="sub" id="chBarsSub">últimos 6 meses</span></div>
+              <div class="bd" id="chBars"></div>
+            </div>
+            <div class="card">
+              <div class="hd"><h3>Despesas por categoria</h3><span class="sub" id="chCatSub"></span></div>
+              <div class="bd" id="chCat"></div>
+            </div>
+            <div class="card">
+              <div class="hd"><h3>Evolução do saldo acumulado</h3><span class="sub">12 meses</span></div>
+              <div class="bd" id="chLine"></div>
+            </div>
+            <div class="card">
+              <div class="hd"><h3 id="chPessoasT">Quem paga o quê</h3><span class="sub" id="chPessoasS">no mês selecionado</span></div>
+              <div class="bd" id="chPessoas"></div>
+            </div>
           <div class="card">
             <div class="hd"><h3>A vencer / em aberto</h3><span class="sub">contas do mês ainda não pagas</span></div>
             <div class="bd tight"><div class="tbl-wrap scroll-y" id="tblAberto"></div></div>
